@@ -39,14 +39,16 @@ data_collection_list = ['Load database']
 data_collection = st.sidebar.multiselect('', data_collection_list)
                                              
 st.cache(persist=True)
+
 def data_collection_options():
+
     if data_collection_list[0] in data_collection:
         # MACHINE-LEARNING DATA
         # dataset\clean_database.db
         sen_file = sqlite3.connect('clean_database.db') 
         df = pd.read_sql("SELECT * FROM Feature_selected_forecasted_data", sen_file)
         df['timestamp'] = pd.to_datetime(df['timestamp'])
-        df=df.set_index('timestamp')
+        df = df.set_index('timestamp')
         
         # SELECT PREDICTION DATE
         col1, col2 = st.columns(2) 
@@ -65,12 +67,25 @@ def data_collection_options():
 
         # End prediction date - calendar module    
         prediction_end_date = st.sidebar.date_input('End date',
-                                            value=start_1 + pd.Timedelta(1, unit='D'),
-                                            min_value = start_1,
+                                            value = prediction_start_date + pd.Timedelta(1, unit='D'),
+                                            min_value = prediction_start_date + pd.Timedelta(1, unit='D'),
                                             max_value = end_1,
                                             key='prediction_date_2')
 
-        prediction_end_date = pd.to_datetime(prediction_end_date) 
+        prediction_end_date = pd.to_datetime(prediction_end_date)
+
+        # if prediction_start_date > prediction_end_date or prediction_start_date == prediction_end_date:
+
+        #     prediction_end_date = st.sidebar.date_input('End date',
+        #                                     value=start_1 + pd.Timedelta(1, unit='D'),
+        #                                     min_value = start_1,
+        #                                     max_value = end_1,
+        #                                     key='prediction_date_2')
+
+        # else: 
+        #     prediction_end_date = pd.to_datetime(prediction_end_date)
+
+
 
         # Train-Test split data
         df_train = df[(df.index < prediction_start_date)].copy(deep=True)
@@ -121,6 +136,8 @@ def model_prediction(df: pd.DataFrame):
     y_pred = scaler_target.inverse_transform(y_pred)
     y_pred = pd.DataFrame(y_pred, columns=['model_forecast_energy_load'])
     y_pred.index = y_test.index
+
+
     y_pred['real_energy_load'] = y_test['real_energy_load'].copy()
 
     return y_pred
