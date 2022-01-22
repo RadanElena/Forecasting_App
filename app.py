@@ -42,7 +42,8 @@ st.cache(persist=True)
 def data_collection_options():
     if data_collection_list[0] in data_collection:
         # MACHINE-LEARNING DATA
-        sen_file = sqlite3.connect(r'dataset\clean_database.db') 
+        # dataset\clean_database.db
+        sen_file = sqlite3.connect('clean_database.db') 
         df = pd.read_sql("SELECT * FROM Feature_selected_forecasted_data", sen_file)
         df['timestamp'] = pd.to_datetime(df['timestamp'])
         df=df.set_index('timestamp')
@@ -112,7 +113,7 @@ def model_prediction(df: pd.DataFrame):
     st.subheader("Model results data")  
     
     # Load model
-    pickled_model = pickle.load(open(r'model\random_forest.pkl', 'rb'))
+    pickled_model = pickle.load(open('random_forest.pkl', 'rb'))
     y_pred = pickled_model.predict(df)
     y_pred = pd.DataFrame(y_pred, columns =["model_forecast_energy_load"])
     
