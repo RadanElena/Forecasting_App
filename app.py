@@ -129,7 +129,7 @@ def model_prediction(df: pd.DataFrame):
 # Run Random Forest model
 model_run = st.sidebar.checkbox("Predict Load")
 
-if model_run:
+if model_run and data_collection:
     # Make prediction
     y_pred = model_prediction(x_test_std)
     y_pred = y_pred.astype(int)
