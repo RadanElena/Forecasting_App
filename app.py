@@ -26,7 +26,8 @@ from sklearn.metrics import mean_absolute_error
 from sklearn.metrics import mean_squared_error
 from sklearn.metrics import mean_absolute_percentage_error
 from sklearn.metrics import r2_score
-
+from sklearn.inspection import permutation_importance
+import plotly.figure_factory as ff
 import pickle
 import sys
 from datetime import date
@@ -107,7 +108,7 @@ st.dataframe(X_test.astype(int))
 # Scale data features
 scaler_features = StandardScaler()
 X_train_std = scaler_features.fit_transform(X_train)
-x_test_std = scaler_features.transform(X_test)
+X_test_std = scaler_features.transform(X_test)
 
 # Scale data target
 scaler_target = StandardScaler()
@@ -179,6 +180,7 @@ def model_metrics(df: pd.DataFrame):
 def data_visualization(df: pd.DataFrame):
     st.subheader("Data Visualization")
     
+    # Line-plot with each column
     fig1 = px.line(df)
     fig1.update_layout(
         xaxis_title="Timestamp",
@@ -188,14 +190,60 @@ def data_visualization(df: pd.DataFrame):
     )
     st.write(fig1)
 
+    # Box-plot with each column
+    fig_box = go.Figure()
+    fig_box.add_trace(go.Box(y= df["Model_forecast [MW]"], name='Model',
+                    marker_color = 'indianred'))
+
+    fig_box.add_trace(go.Box(y= df["Entsoe_forecast [MW]"], name = 'Entsoe',
+                    marker_color = 'lightseagreen'))
+
+    fig_box.add_trace(go.Box(y= df["Real_energy_load [MW]"], name = 'Real',
+                    marker_color = 'hotpink'))
+
+    fig_box.update_layout(
+        width=1025,
+        height=500,
+    )
+    st.write(fig_box)
+
+    # Feature importance
+    regr = pickle.load(open('random_forest.pkl', 'rb'))
+
+    feature_importance = regr.feature_importances_
+    sorted_idx = np.argsort(feature_importance)
+
+    fig_importance = px.bar(sorted_idx, x=regr.feature_importances_[sorted_idx], y= X_train.columns[sorted_idx])
+    fig_importance.update_layout(
+        xaxis_title="Feature importance",
+        yaxis_title = "Features",
+        width=1100,
+        height=500,
+        )
+    st.write(fig_importance)
+
+    # Feature permutation
+    perm_importance = permutation_importance(regr, X_test_std, y_test_std)
+    sorted_idx = perm_importance.importances_mean.argsort()
+    
+    fig_permutation = px.bar(sorted_idx, x = perm_importance.importances_mean[sorted_idx], y= X_test.columns[sorted_idx])
    
+    fig_permutation.update_layout(
+        xaxis_title="Feature Permutation",
+        yaxis_title = "Features",
+        width=1100,
+        height=500,
+        )
+    st.write(fig_permutation)
+
+
 ##################################################################################################################################
 # Run Random Forest model
 model_run = st.sidebar.checkbox("Predict Load")
 
 if model_run:
     # Make prediction
-    y_pred = model_prediction(x_test_std)
+    y_pred = model_prediction(X_test_std)
     y_pred = y_pred.astype(int)
     y_pred
 
